@@ -13,7 +13,13 @@ variable "az_zone" {
 # Тип сетевого диска, из которого создается сервер
 variable "volume_type" {
   type    = string
-  default = "fast.ru-3b"
+  default = "fast"
+}
+
+# Объём диска для вм
+variable "volume_size" {
+  type    = string
+  default = "5"
 }
 
 # CIDR подсети
@@ -24,10 +30,15 @@ variable "subnet_cidr" {
 
 # Кол-во инсталляций
 variable "vm_name" {
-  type    = string
+  type = string
 }
 
 # Какой хотим образ для вм
 variable "image_name" {
+  type = string
+}
+
+# Имя flavor для вм
+variable "flavor_name" {
   type = string
 }

@@ -45,24 +45,18 @@ resource "random_password" "random_password" {
   special = false
 }
 
-# Создание конфигурации сервера с 1 ГБ RAM и 1 vCPU
-# Параметр disk = 0  делает сетевой диск загрузочным
-resource "openstack_compute_flavor_v2" "flavor_server" {
-  name      = "tf_server"
-  ram       = "1024"
-  vcpus     = "1"
-  disk      = "0"
-  is_public = "false"
-  region    = var.region
+data "openstack_compute_flavor_v2" "flavor" {
+  name   = var.flavor_name
+  region = var.region
 }
 
 # Создание сетевого загрузочного диска размером 5 ГБ из образа
 resource "openstack_blockstorage_volume_v3" "volume_server" {
   region               = var.region
   name                 = "volume-for_${var.vm_name}"
-  size                 = "5"
+  size                 = var.volume_size
   image_id             = data.openstack_images_image_v2.ubuntu_image.id
-  volume_type          = var.volume_type
+  volume_type          = "${var.volume_type}.${var.az_zone}"
   availability_zone    = var.az_zone
   enable_online_resize = true
   lifecycle {
@@ -73,17 +67,17 @@ resource "openstack_blockstorage_volume_v3" "volume_server" {
 # Создание сервера
 resource "openstack_compute_instance_v2" "server_tf" {
   name              = var.vm_name
-  flavor_id         = openstack_compute_flavor_v2.flavor_server.id
+  flavor_id         = data.openstack_compute_flavor_v2.flavor.id
   availability_zone = var.az_zone
   # Изменяем пароль для root пользователя
-  user_data         = <<-EOT
+  user_data = <<-EOT
 #cloud-config
 chpasswd:
   list: |
      root:${random_password.random_password.result}
   expire: False
   EOT
-  region            = var.region
+  region    = var.region
   network {
     uuid = openstack_networking_network_v2.network_tf.id
   }
