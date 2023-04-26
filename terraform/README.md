@@ -11,13 +11,14 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_local"></a> [local](#provider\_local) | 2.4.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_installation"></a> [installation](#module\_installation) | ./modules/installation | n/a |
+| <a name="module_installation-tesla-a2"></a> [installation-tesla-a2](#module\_installation-tesla-a2) | ./modules/installation | n/a |
+| <a name="module_installation-tesla-t4-16g"></a> [installation-tesla-t4-16g](#module\_installation-tesla-t4-16g) | ./modules/installation | n/a |
 | <a name="module_project"></a> [project](#module\_project) | ./modules/project_with_user | n/a |
 
 ## Resources
