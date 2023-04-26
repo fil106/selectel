@@ -1,7 +1,12 @@
+# URI до openstack api
+variable "auth" {
+  type    = string
+  default = "https://api.selvpc.ru/identity/v3"
+}
+
 # Selectel token для провайдереа selectel
 variable "sel_token" {
-  type        = string
-  description = "selectel token"
+  type = string
 }
 
 # Пул Облачной платформы

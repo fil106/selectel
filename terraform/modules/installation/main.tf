@@ -75,6 +75,7 @@ resource "openstack_compute_instance_v2" "server_tf" {
   name              = var.vm_name
   flavor_id         = openstack_compute_flavor_v2.flavor_server.id
   availability_zone = var.az_zone
+  # Изменяем пароль для root пользователя
   user_data         = <<-EOT
 #cloud-config
 chpasswd:
