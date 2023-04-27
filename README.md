@@ -39,7 +39,7 @@
 1) Устанавливаем [инструкция](https://docs.selectel.ru/cloud/servers/tools/openstack/)
 2) Для того чтобы openstack cli знал в какую api идти необходимо
 3) либо сделать source файла rc.sh из панели, но прежде должен быть создан проект - [как получить rc.sh](https://docs.selectel.ru/cloud/serverless/instructions/set-up-autodeploy/#получение-rc-файла)
-4) либо вфполнить export нужных ENV переменных для openstack cli [создание и source rc.sh](https://docs.openstack.org/newton/user-guide/common/cli-set-environment-variables-using-openstack-rc.html)
+4) либо выполнить export нужных ENV переменных для openstack cli [создание и source rc.sh](https://docs.openstack.org/newton/user-guide/common/cli-set-environment-variables-using-openstack-rc.html)
 5) Выбор региона куда ходить openstack cli определяется через переменную `OS_REGION_NAME=ru-9`
 
 ### Как узнать доступные конфигурации (flavors)
