@@ -51,6 +51,9 @@ module "installation-tesla-a2" {
   ]
 }
 
+# можно создавать неограниченное количество модулей ...
+# допустим для разных регионов или из разных образов
+
 # Создание файла с ip=password
 resource "local_file" "vars" {
   content  = local.list
