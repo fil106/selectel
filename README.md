@@ -6,7 +6,7 @@
 
 ## Запуск terraform
 
-**ВАЖНО! получение провайдеров заблокировано из России, нужен vpn. Или скачать вручную и положить в папку `terraform.d`**
+**ВАЖНО! получение провайдеров заблокировано из России, нужен vpn. Или скачать вручную и положить в папку `terraform.d`. Существуют также и другие способы, например приватный registry для провайдеров**
 
 ### Через terraform cli
 
@@ -34,9 +34,17 @@
   - вставляем selectel api key - https://my.selectel.ru/profile/apikeys
   - подтверждаем свои намерения вводим `yes`
 
-## Как узнать доступные конфигурации (flavors)
+## Openstack CLI
 
-Чтобы вывести весь список конфигураций в определенном региона можно выполнить данную команду
+1) Устанавливаем [инструкция](https://docs.selectel.ru/cloud/servers/tools/openstack/)
+2) Для того чтобы openstack cli знал в какую api идти необходимо
+   3) либо сделать source файла rc.sh из панели, но прежде должен быть создан проект - [как получить rc.sh](https://docs.selectel.ru/cloud/serverless/instructions/set-up-autodeploy/#получение-rc-файла)
+   4) либо вфполнить export нужных ENV переменных для openstack cli [создание и source rc.sh](https://docs.openstack.org/newton/user-guide/common/cli-set-environment-variables-using-openstack-rc.html)
+3) Выбор региона куда ходить openstack cli определяется через переменную `OS_REGION_NAME=ru-9`
+
+### Как узнать доступные конфигурации (flavors)
+
+Чтобы вывести весь список конфигураций в определенном регионе можно выполнить данную команду
 
 ```bash
 #: openstack flavor list --public --long -f value -c ID -c Name -c Properties
