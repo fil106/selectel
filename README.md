@@ -33,3 +33,15 @@
 - `docker run -it -v $(pwd):/terraform hashicorp/terraform:1.4.5 -chdir=terraform apply`
   - вставляем selectel api key - https://my.selectel.ru/profile/apikeys
   - подтверждаем свои намерения вводим `yes`
+
+## Как узнать доступные конфигурации (flavors)
+
+Чтобы вывести весь список конфигураций в определенном региона можно выполнить данную команду
+
+```bash
+#: openstack flavor list --public --long -f value -c ID -c Name -c Properties
+
+3031 GL3.4-32768-0-1GPU {'aggregate_instance_extra_specs:gpu': 'T4', 'hw:cpu_max_sockets': '2', 'hw:hide_hypervisor_id': 'true', 'pci_passthrough:alias': 'T4:1'}
+```
+
+В результате мы получим вывод с ID, name и properties колонками. Отсюда мы можем понять какое имя flavor с какой видеокартой матчится
