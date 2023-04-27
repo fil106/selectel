@@ -1,8 +1,10 @@
 locals {
   # Получаем из sel_token domain_id для провайдера openstack
   domain_id = replace(regex("_[0-9]+$", var.sel_token), "_", "")
-  # Формируем список из массива виртуалок
-  list = join("\n", [for i in module.installation-tesla-t4-16g : "${i.vm_fip} = ${i.vm_password}"], [for i in module.installation-tesla-a2 : "${i.vm_fip} = ${i.vm_password}"])
+  # Формируем список из массива виртуалок для выгрузки в файл
+  list = join("\n",
+    [for i in module.installation-tesla-t4-16g : "${i.vm_fip} = ${i.vm_password}"],
+    [for i in module.installation-tesla-a2 : "${i.vm_fip} = ${i.vm_password}"])
 }
 
 # Создание проекта и сервисного пользователя
