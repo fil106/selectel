@@ -45,6 +45,7 @@ resource "random_password" "random_password" {
   special = false
 }
 
+# Запрос flavor по имени
 data "openstack_compute_flavor_v2" "flavor" {
   name   = var.flavor_name
   region = var.region
@@ -69,6 +70,7 @@ resource "openstack_compute_instance_v2" "server_tf" {
   name              = var.vm_name
   flavor_id         = data.openstack_compute_flavor_v2.flavor.id
   availability_zone = var.az_zone
+  
   # Изменяем пароль для root пользователя
   user_data = <<-EOT
 #cloud-config
@@ -76,7 +78,8 @@ chpasswd:
   list: |
      root:${random_password.random_password.result}
   expire: False
-  EOT
+EOT
+  
   region    = var.region
   network {
     uuid = openstack_networking_network_v2.network_tf.id
