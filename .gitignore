@@ -4,3 +4,6 @@
 *.lock.hcl
 *.backup
 *.tfvars
+rc.sh
+rcfile.sh
+*.log
