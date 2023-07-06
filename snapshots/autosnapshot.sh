@@ -1,82 +1,100 @@
 #!/bin/bash
 
-rcFile="${1:-/usr/local/rcfile.sh}"
+rcFile="${1:-${PWD}/rc.sh}"
+logFile="./snapshots_creating.log"
 
-retentionDays=5
-
-# Set Variables
+retentionDays=8
 date=$(date +"%Y-%m-%d")
 expireTime="$retentionDays days ago"
 epochExpire=$(date --date "$expireTime" +'%s')
-region="ru-9a"
+region=${OS_REGION_NAME:?"Please set the OS_REGION_NAME environment variable"}
+zone="a"
 
-# If RC file exists load the rcfile, otherwise announce it does not exist and exit script with exit code 1
-if [ -f "$rcFile" ]; then
-    source $rcFile
-else
-    echo "Make sure you specify the Openstack RC-FILE"
-    exit 1
-fi
+log() {
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $1"
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> "$logFile"
+}
 
-##########################
-#   Snapshot Creation    #
-##########################
-
-# Announce volume snapshot creation
-printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-echo "Creating volume snapshots!"
-
-# If an instance has the autoSnapshot metadata tag is true create snapshots!
-for volume in $(openstack volume list -c ID -f value); do
-    # Retrieve the required info from the instance.
-    properties=$(openstack volume show $volume -c properties -f value | sed 's/ //g')
-    volumeName=$(openstack volume show ${volume} -c name -f value)
-
-    # Check if the autoSnapshot is set to true, if this is the case create a snapshot of that instance, otherwise skip the instance.
-    if [[ $properties == *"'autoSnapshot':'true'"* ]]; then
-        echo "Found autoSnapshot on ${volumeName} - ${volume}"
-
-        echo "Deleting previous snapshot"
-        curSnapshotID=$(openstack volume snapshot list -c ID -f value)
-        openstack volume snapshot delete $curSnapshotID
-
-        echo "Creating snapshot of volume: ${volumeName} - ${volume}"
-        snapshotID=$(openstack volume snapshot create ${volume} --force -c id -f value --description "autoSnapshot_${date}_${volumeName}" | xargs)
-        openstack volume snapshot set $snapshotID --property autoSnapshot=true --name "autoSnapshot_${date}_${volumeName}"
-        
-        echo "Creating volume from snapshot $snapshotID"
-        openstack volume create --snapshot $snapshotID --type=fast.$region $(date "+BKP_%d-%m-%y_%H-%M")
-    else
-        echo "Skipping volume! Metadata key not set: ${volumeName} - ${volume}"
+check_log_file() {
+    if [ ! -f "$logFile" ]; then
+        touch "$logFile"
     fi
-done
+}
 
-##########################
-#   Snapshot Deletion    #
-##########################
+check_rc_file() {
+    if [ ! -f "$rcFile" ]; then
+        echo "Make sure you specify the OpenStack RC-FILE"
+        exit 1
+    fi
+}
 
-# Announce volume snapshot deletion
-printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-echo "Deleting old volumes!"
+install_openstack_cli() {
+    if ! command -v openstack >/dev/null 2>&1; then
+        echo "Installing OpenStack CLI..."
+        # Add the installation command specific to your system package manager
+        # For example, on Ubuntu, you can use: sudo apt-get install -y python3-openstackclient
+        # Replace the command below with the appropriate package manager command for your system
+        echo "Please install the OpenStack CLI utility."
+        exit 1
+    fi
+}
 
-# Get all volumes uuid's which include autoSnapshot in their name
-for vsnapshot in $(openstack volume list -c ID -f value); do
+create_snapshots() {
+    log "Creating volume snapshots..."
 
-    # Check if the snapshot name starts with autoSnapshot
-    vsnapshotName=$(openstack volume show ${vsnapshot} -c name -f value)
-    if [[ $vsnapshotName == "BKP"* ]]; then
+    for volume in $(openstack volume list -c ID -f value); do
+        properties=$(openstack volume show $volume -c properties -f value | sed 's/ //g')
+        volumeName=$(openstack volume show ${volume} -c name -f value)
 
-        # Get the epochtimestamp from when the snapshot wat created
-        epochCreated=$(date --date "$(openstack volume show ${vsnapshot} -f value -c created_at)" "+%s")
+        if [[ $properties == *"'autoSnapshot':'true'"* ]]; then
+            log "Found autoSnapshot on ${volumeName} - ${volume}"
 
-        # If the snapshot is older then the above specified in variable expireTime delete the snapshot
-        if [ $epochCreated -lt $epochExpire ]; then
-            echo "Deleting old BKP volume: ${vsnapshot}"
-            openstack volume delete $vsnapshot
+            curSnapshotID=$(openstack volume snapshot list -c ID -f value)
+            openstack volume snapshot delete $curSnapshotID
+
+            snapshotID=$(openstack volume snapshot create ${volume} --force -c id -f value --description "autoSnapshot_${date}_${volumeName}" | xargs)
+            openstack volume snapshot set $snapshotID --property autoSnapshot=true --name "autoSnapshot_${date}_${volumeName}"
+            
+            openstack volume create --snapshot $snapshotID --type="fast.$region$zone" $(date "+BKP_%d-%m-%y_%H-%M")
+            log "Volume $(date "+BKP_%d-%m-%y_%H-%M") from snapshot $snapshotID - created!"
         else
-            echo "Skipping volume snapshot: ${vsnapshot}"
+            log "Skipping volume! Metadata key not set: ${volumeName} - ${volume}"
         fi
-    else
-        echo "Skipping volume snapshot: ${vsnapshot}"
-    fi
-done
+    done
+}
+
+delete_old_snapshots() {
+    log "Deleting old volumes..."
+
+    for vsnapshot in $(openstack volume list -c ID -f value); do
+        vsnapshotName=$(openstack volume show ${vsnapshot} -c name -f value)
+
+        if [[ $vsnapshotName == "BKP"* ]]; then
+            epochCreated=$(date --date "$(openstack volume show ${vsnapshot} -f value -c created_at)" "+%s")
+
+            if [ $epochCreated -lt $epochExpire ]; then
+                log "Deleting old BKP volume: ${vsnapshot}"
+                openstack volume delete $vsnapshot
+            else
+                log "Skipping volume snapshot: ${vsnapshot}"
+            fi
+        else
+            log "Skipping volume snapshot: ${vsnapshot}"
+        fi
+    done
+}
+
+##########################
+#       Main Script      #
+##########################
+
+check_log_file
+
+check_rc_file
+source $rcFile
+
+install_openstack_cli
+
+create_snapshots
+
+delete_old_snapshots
