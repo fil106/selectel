@@ -17,7 +17,7 @@ openstack volume set --property autoSnapshot=true <volume uuid>
 ```
 5. Запустите скрипт с помощью следующей команды:
 ```bash
-bash autosnapshot.sh "path to rc.sh file"
+bash autosnapshot.sh [rcFile]
 ```
 - Если аргумент rcFile не указан, скрипт будет использовать путь по умолчанию, указанный в скрипте `${PWD}/rc.sh`.
 - Скрипт создаст файл журнала с именем snapshots_creating.log в текущем каталоге для сохранения логов выполнения.
