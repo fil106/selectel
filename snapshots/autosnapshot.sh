@@ -15,6 +15,8 @@ check_rc_file() {
 
 rcFile="${1:-${PWD}/rc.sh}"
 logFile="./snapshots_creating.log"
+telegramToken="YOUR_TELEGRAM_BOT_TOKEN"
+chatId="YOUR_TELEGRAM_CHAT_ID"
 
 check_log_file
 
@@ -28,6 +30,7 @@ expireTime="$retentionDays days ago"
 epochExpire=$(date --date "$expireTime" +'%s')
 region=${OS_REGION_NAME:?"Please set the OS_REGION_NAME environment variable"}
 zone="a"
+panelLink=""
 
 log() {
     echo "$(date +"%Y-%m-%d %H:%M:%S") $1"
@@ -45,6 +48,11 @@ install_openstack_cli() {
     fi
 }
 
+send_telegram_message() {
+    message="$1"
+    curl -s -X POST "https://api.telegram.org/bot$telegramToken/sendMessage" -d "parse_mode=HTML" -d "chat_id=$chatId" -d "text=$message" >/dev/null
+}
+
 create_snapshots() {
     log "Creating volume snapshots..."
 
@@ -60,9 +68,16 @@ create_snapshots() {
 
             snapshotID=$(openstack volume snapshot create ${volume} --force -c id -f value --description "autoSnapshot_${date}_${volumeName}" | xargs)
             openstack volume snapshot set $snapshotID --property autoSnapshot=true --name "autoSnapshot_${date}_${volumeName}"
-            
-            openstack volume create --snapshot $snapshotID --type="fast.$region$zone" $(date "+BKP_%d-%m-%y_%H-%M")
-            log "Volume $(date "+BKP_%d-%m-%y_%H-%M") from snapshot $snapshotID - created!"
+
+            createdDiskName=$(openstack volume create --snapshot $snapshotID --type="fast.$region$zone" $(date "+BKP_%d-%m-%y_%H-%M") -c name -f value 2>&1)
+            if [[ $? -eq 0 ]]; then
+                createdDiskID=$(openstack volume list --name $createdDiskName -c ID -f value)
+                log "Volume $createdDiskName from snapshot $snapshotID - created!"
+                send_telegram_message "👍👍👍 <b>Диск успешно создан:</b>%0AИмя диска: <b>$createdDiskName</b>%0AСсылка: $panelLink/$createdDiskID"
+            else
+                log "Failed to create volume from snapshot $snapshotID: $createdDiskName"
+                send_telegram_message "🚨🚨🚨 <b>ВНИМАНИЕ! Ошибка при создании диска из снапшота:</b>%0AИмя диска: <b>$createdDiskName</b>%0A<b>Необходимо проверить квоты!</b>"
+            fi
         else
             log "Skipping volume! Metadata key not set: ${volumeName} - ${volume}"
         fi
