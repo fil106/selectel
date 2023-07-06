@@ -1,20 +1,5 @@
 #!/bin/bash
 
-rcFile="${1:-${PWD}/rc.sh}"
-logFile="./snapshots_creating.log"
-
-retentionDays=8
-date=$(date +"%Y-%m-%d")
-expireTime="$retentionDays days ago"
-epochExpire=$(date --date "$expireTime" +'%s')
-region=${OS_REGION_NAME:?"Please set the OS_REGION_NAME environment variable"}
-zone="a"
-
-log() {
-    echo "$(date +"%Y-%m-%d %H:%M:%S") $1"
-    echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> "$logFile"
-}
-
 check_log_file() {
     if [ ! -f "$logFile" ]; then
         touch "$logFile"
@@ -26,6 +11,27 @@ check_rc_file() {
         echo "Make sure you specify the OpenStack RC-FILE"
         exit 1
     fi
+}
+
+rcFile="${1:-${PWD}/rc.sh}"
+logFile="./snapshots_creating.log"
+
+check_log_file
+
+check_rc_file
+
+source $rcFile
+
+retentionDays=8
+date=$(date +"%Y-%m-%d")
+expireTime="$retentionDays days ago"
+epochExpire=$(date --date "$expireTime" +'%s')
+region=${OS_REGION_NAME:?"Please set the OS_REGION_NAME environment variable"}
+zone="a"
+
+log() {
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $1"
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> "$logFile"
 }
 
 install_openstack_cli() {
@@ -87,11 +93,6 @@ delete_old_snapshots() {
 ##########################
 #       Main Script      #
 ##########################
-
-check_log_file
-
-check_rc_file
-source $rcFile
 
 install_openstack_cli
 
