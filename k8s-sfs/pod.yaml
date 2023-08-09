@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  volumes:
+  - name: sfs-test-storage
+    persistentVolumeClaim:
+      claimName: pvc-test
+  containers:
+  - name: container-nginx
+    image: nginx
+    ports:
+    - containerPort: 80
+      name: "http-server"
+    volumeMounts:
+    - mountPath: "/usr/share/nginx/html"
+      name: sfs-test-storage
+  hostNetwork: true

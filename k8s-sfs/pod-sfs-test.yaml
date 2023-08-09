@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sfs-test-deployment
+  labels:
+    project: sfs-test-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      project: sfs-test
+  template:
+    metadata:
+      labels:
+        project: sfs-test
+    spec:
+      volumes:
+        - name: sfs-test-storage
+          persistentVolumeClaim:
+            claimName: pvc-test
+      containers:
+        - name: container-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+              name: "http-server"
+          volumeMounts:
+            - mountPath: "/usr/share/nginx/html"
+              name: sfs-test-storage
