@@ -53,6 +53,35 @@ send_telegram_message() {
     curl -s -X POST "https://api.telegram.org/bot$telegramToken/sendMessage" -d "parse_mode=HTML" -d "chat_id=$chatId" -d "text=$message" >/dev/null
 }
 
+# Функция для ожидания определенных статусов снапшота
+wait_for_snapshot_status() {
+    local snapshotID="$1"
+    local expected_statuses="$2"
+    local timeout="$3"
+
+    local start_time=$(date +%s)
+    local end_time=$((start_time + timeout))
+
+    while true; do
+        local current_time=$(date +%s)
+        if [[ $current_time -ge $end_time ]]; then
+            log "Timeout reached. Exiting..."
+            send_telegram_message "🚨🚨🚨 <b>ВНИМАНИЕ! Превышено время ожидания для снапшота $snapshotID</b>"
+            break
+        fi
+
+        local snapshot_status=$(openstack volume snapshot show $snapshotID -c status -f value)
+
+        if [[ $expected_statuses =~ $snapshot_status ]]; then
+            log "Snapshot $snapshotID is in status: $snapshot_status"
+            break
+        fi
+
+        log "Snapshot $snapshotID is in status: $snapshot_status, waiting..."
+        sleep 5
+    done
+}
+
 create_snapshots() {
     log "Creating volume snapshots..."
 
@@ -67,6 +96,10 @@ create_snapshots() {
             openstack volume snapshot delete $curSnapshotID
 
             snapshotID=$(openstack volume snapshot create ${volume} --force -c id -f value --description "autoSnapshot_${date}_${volumeName}" | xargs)
+
+            # Ожидание, пока статус снапшота не станет одним из ожидаемых или не пройдет 30 секунд
+            wait_for_snapshot_status "$snapshotID" "available" 30
+
             openstack volume snapshot set $snapshotID --property autoSnapshot=true --name "autoSnapshot_${date}_${volumeName}"
 
             createdDiskName=$(openstack volume create --snapshot $snapshotID --type="fast.$region$zone" $(date "+BKP_%d-%m-%y_%H-%M") -c name -f value 2>&1)
