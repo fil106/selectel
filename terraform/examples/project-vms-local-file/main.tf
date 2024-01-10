@@ -10,14 +10,14 @@ locals {
 
 ## Создание проекта и сервисного пользователя
 module "project" {
-  source = "./modules/project_with_user"
+  source = "../../modules/project_with_user"
 
   project_name = "Project-tf"
   user_name    = "terraform_user_1"
 }
 
 module "nat" {
-  source      = "./modules/nat"
+  source      = "../../modules/nat"
   os_region   = "ru-7"
   subnet_cidr = var.subnet_cidr
 
@@ -28,7 +28,7 @@ module "nat" {
 
 # Создание полноценной инсталляции виртуалка,роутер,сеть,плавающий ip
 module "installation-a2000-6gb-16gb" {
-  source     = "./modules/installation"
+  source     = "../../modules/installation"
   region     = "ru-7"
   az_zone    = "ru-7a"
   router_id  = module.nat.router_id
@@ -49,7 +49,7 @@ module "installation-a2000-6gb-16gb" {
 
 # Создание полноценной инсталляции виртуалка,роутер,сеть,плавающий ip
 #module "installation-tesla-a2" {
-#  source  = "./modules/installation"
+#  source  = "../../modules/installation"
 #  region  = "ru-9"
 #  az_zone = "ru-9a"
 #
