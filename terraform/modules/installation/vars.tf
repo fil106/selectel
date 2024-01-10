@@ -10,6 +10,18 @@ variable "az_zone" {
   default = "ru-3b"
 }
 
+variable "router_id" {
+  type = string
+}
+
+variable "network_id" {
+  type = string
+}
+
+variable "subnet_id" {
+  type = string
+}
+
 # Тип сетевого диска, из которого создается сервер
 variable "volume_type" {
   type    = string

@@ -4,7 +4,7 @@ terraform {
   required_providers {
     selectel = {
       source  = "selectel/selectel"
-      version = "3.9.1"
+      version = "3.11.0"
     }
     random = {
       source  = "hashicorp/random"

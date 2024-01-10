@@ -1,42 +1,8 @@
 # Поиск ID образа (из которого будет создан сервер) по его имени
-data "openstack_images_image_v2" "ubuntu_image" {
+data "openstack_images_image_v2" "image" {
   name        = var.image_name
   most_recent = true
   region      = var.region
-}
-
-# Запрос ID внешней сети по имени
-data "openstack_networking_network_v2" "external_net" {
-  name   = "external-network"
-  region = var.region
-}
-
-# Создание роутера
-resource "openstack_networking_router_v2" "router_tf" {
-  name                = "router_tf_for_${var.vm_name}"
-  external_network_id = data.openstack_networking_network_v2.external_net.id
-  region              = var.region
-}
-
-# Создание сети
-resource "openstack_networking_network_v2" "network_tf" {
-  name   = "network_tf_for_${var.vm_name}"
-  region = var.region
-}
-
-# Создание подсети
-resource "openstack_networking_subnet_v2" "subnet_tf" {
-  network_id = openstack_networking_network_v2.network_tf.id
-  name       = "subnet_tf_for_${var.vm_name}"
-  cidr       = var.subnet_cidr
-  region     = var.region
-}
-
-# Подключение роутера к подсети
-resource "openstack_networking_router_interface_v2" "router_interface_tf" {
-  router_id = openstack_networking_router_v2.router_tf.id
-  subnet_id = openstack_networking_subnet_v2.subnet_tf.id
-  region    = var.region
 }
 
 # Создание уникального пароля
@@ -56,7 +22,7 @@ resource "openstack_blockstorage_volume_v3" "volume_server" {
   region               = var.region
   name                 = "volume-for_${var.vm_name}"
   size                 = var.volume_size
-  image_id             = data.openstack_images_image_v2.ubuntu_image.id
+  image_id             = data.openstack_images_image_v2.image.id
   volume_type          = "${var.volume_type}.${var.az_zone}"
   availability_zone    = var.az_zone
   enable_online_resize = true
@@ -82,7 +48,7 @@ EOT
   
   region    = var.region
   network {
-    uuid = openstack_networking_network_v2.network_tf.id
+    uuid = var.network_id
   }
   block_device {
     uuid             = openstack_blockstorage_volume_v3.volume_server.id
